@@ -98,11 +98,18 @@ export const import_grades= async(req, res)=>{
         let latexfile="";
         for (const clave in info_level) {
           console.log(`La clave es ${clave}`)
-          latexfile= latexfile+createTable(info_level[clave])
-          const llama=await getllama_analisis(info_level[clave])
+          latexfile= latexfile+create_latexTable(info_level[clave], clave)
+          const llama_table=create_llamaTable(info_level[clave], clave)
+          console.log(llama_table)
+          const llama=await getllama_analisis(llama_table)
           let analisis=`\n\\vspace{1cm}\n\\section{Análisis de Rendimiento}\n${llama}\\\\\n\\vspace{1cm}`
+          analisis=analisis.replace(/%/g,"\\%")
+          analisis=analisis.replace(/#/g,"\\#")
+          analisis=analisis.replace(/_/g,"\\_")
           latexfile=latexfile+analisis
         }
+
+        latexfile+=create_latexEra()
 
 
         const filePath="Latex/Contenido/1.- Contenido.tex"
@@ -133,9 +140,10 @@ const  getllama_analisis=async(notas)=> {
 
 
 
-const createTable = (promedios) => { //Recibe un objeto con los Json de las calificaciones
+const create_latexTable = (promedios, nivel) => { //Recibe un objeto con los Json de las calificaciones
 
   let latexTable = `\\small\n\\begin{tabularx}{\\textwidth}{|p{2.5cm}|p{2.5cm}|X|X|X|X|}\n\\hline\n`;
+  latexTable += `\\multicolumn{6}{|X|}{\\textbf{Nivel: ${nivel} }}\\\\\\hline`
   latexTable += `\\textbf{Materia} & \\textbf{Docente} & \\textbf{Estudiantes} & \\textbf{Aprobados} & \\textbf{Promedio} & \\textbf{\\%Supera el Promedio} \\\\ \\hline\n`;
 
   promedios.forEach(item => {
@@ -158,3 +166,36 @@ const saveLatexFile=(filePath, content)=> {
     console.log('Archivo LaTeX guardado correctamente.');
   });
 }
+
+
+const create_llamaTable = (promedios, nivel) => { //Recibe un objeto con los Json de las calificaciones
+
+  let llamaTable = `|Nivel: ${nivel}|`; 
+  llamaTable += `|Materia|Docente|Número de Estudiantes|Número de Aprobados|Promedio del Curso|Porcentaje que supera el promedio|`;
+  
+  promedios.forEach(item => {
+    llamaTable += `|${item.Asignatura} |${item.Docente} | ${item.Total_estudiantes} | ${item.Aprobados} | ${item.Calificación_promedio} | ${item.Porcentaje_supera_promedio}|`;
+  });
+
+
+  return llamaTable;
+
+}
+
+
+const create_latexEra=() => { //recibe un objeto
+
+const latexEra=`\\begin{tabularx}{\\textwidth}{|X|X|X|}
+\\hline
+\\textbf{ELABORADO POR:} & \\textbf{REVISADO POR:} & \\textbf{APROBADO POR:} \\\\ \\hline
+Firma: & Firma: & Firma:\\\\
+&&\\\\
+&&\\\\
+&&\\\\ \\hline
+\\textbf{Nombre: Homero Velasteguí} & \\textbf{Nombre: Manuel Nevarez} & \\textbf{Nombre: Pablo Pico Valencia PhD.} \\\\ \\hline
+\\textbf{Cargo: Coordinador Carrera} & \\textbf{Cargo: Consejo de Escuela} & \\textbf{Cargo: Director Académico} \\\\ \\hline
+\\textbf{Fecha: 9/3/2024} & \\textbf{Fecha: 9/3/2024} & \\textbf{Fecha: 9/3/2024} \\\\ \\hline
+\\end{tabularx}\n`
+
+return latexEra
+} 
